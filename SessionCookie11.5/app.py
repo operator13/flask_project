@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, session
+from flask import Flask, request, render_template, session, redirect
 
 app = Flask(__name__)
 app.secret_key = "secretkey"
@@ -70,9 +70,12 @@ def logout():
 
 @app.route("/books", methods=["GET"])
 def getBooks():
-    user = session["username"]
-    return render_template('books.html', books=books, username=session["username"])
+    try:
+        user = session["username"]
+        return render_template('books.html', books=books, username=session["username"])
+    except KeyError:
+        return render_template("register.html")
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5001)
