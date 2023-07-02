@@ -1,12 +1,7 @@
-import re
-from flask import Flask, request, render_template, session
-from flask import redirect
-from functools import wraps
-import os
+from flask import Flask, request, render_template
+from flask import session, make_response
 app = Flask(__name__)
 app.secret_key = "secretkey"
-app.config["UPLOADED_PHOTOS_DEST"] = "static"
-
 books = [
     {
         "author": "Hernando de Soto",
@@ -52,31 +47,38 @@ def firstRoute():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username  = request.form["username"]
-        password  = request.form["password"]
+        username = request.form["username"]
+        password = request.form["password"]
         if checkUser(username, password):
-            session["username"] = username
-            return render_template("index.html", username = session["username"])
+            response = make_response(
+                render_template(
+                    "index.html", title="books", username=username, books=books
+                )
+            )
+            # set cookie to users name
+            response.set_cookie("MySessionCookie", username)
+            return response
         else:
             return render_template("register.html")
-
     elif request.method == "GET":
         return render_template("register.html")
 
 
-
 @app.route("/logout")
 def logout():
-     # remove the username from the session if it is there
+    # remove the username from the session if it is there
     session.pop("username", None)
     return "Logged Out of Books"
 
 
 @app.route("/books", methods=["GET"])
 def getBooks():
-        return render_template('books.html',books=books,username=session["username"])
-#add decorator for books
+    try:
+        user = request.cookies.get("MySessionCookie")
+        return render_template('books.html', books=books, username=user)
+    except:
+        return render_template("register.html")
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5001)
+    app.run(debug=True, host="0.0.0.0", port=5002)
